@@ -5,7 +5,18 @@ import hashlib
 import uuid
 
 
-class AuthenticatedService(Service):
+class ApiService(Service):
+    @hook('after_request')
+    def set_cross_request_headers(self, response):
+        config = current_app.features.api.options
+        if config['allow_cross_requests']:
+            response.headers.add('Access-Control-Allow-Origin', config['cross_request_origin'])
+            response.headers.add('Access-Control-Allow-Headers', ','.join(config['cross_request_headers']))
+            response.headers.add('Access-Control-Allow-Methods', ','.join(config['cross_request_methods']))
+        return response
+
+
+class AuthenticatedApiService(ApiService):
     @hook('before_request')
     def authenticate_before_request(self):
         if not current_app.features.users.logged_in():
@@ -15,7 +26,11 @@ class AuthenticatedService(Service):
 class ApiFeature(Feature):
     name = 'api'
     requires = ['models', 'users']
-    defaults = {"default_key_duration": None}
+    defaults = {"default_key_duration": None,
+                "allow_cross_requests": True,
+                "cross_request_origin": "*",
+                "cross_request_headers": ['Content-Type', 'Authorization'],
+                "cross_request_methods": ['GET', 'PUT', 'POST', 'DELETE']}
 
     def init_app(self, app):
         self.model = app.features.models.ensure_model('ApiKey',
