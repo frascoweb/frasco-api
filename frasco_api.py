@@ -35,7 +35,7 @@ class ApiFeature(Feature):
     def init_app(self, app):
         self.model = app.features.models.ensure_model('ApiKey',
             user=app.features.users.model,
-            value=str,
+            value=dict(type=str, index=True),
             last_accessed_at=datetime.datetime,
             last_accessed_from=str,
             expires_at=datetime.datetime)
