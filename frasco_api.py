@@ -1,4 +1,4 @@
-from frasco import Feature, Service, action, hook, abort, current_app, request, jsonify
+from frasco import Feature, Service, action, hook, abort, current_app, request, jsonify, g
 import datetime
 import base64
 import hashlib
@@ -6,6 +6,10 @@ import uuid
 
 
 class ApiService(Service):
+    @hook('before_request')
+    def set_api_flag(self):
+        g.is_api_call = True
+
     @hook('after_request')
     def set_cross_request_headers(self, response):
         config = current_app.features.api.options
