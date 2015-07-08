@@ -59,7 +59,7 @@ class ApiFeature(Feature):
                     return None
                 key.last_accessed_at = now
                 key.last_accessed_from = request.remote_addr
-                key.save()
+                app.features.models.backend.save(key)
                 return key.user
 
     @action('create_api_key', default_option='user', as_='api_key')
@@ -71,5 +71,5 @@ class ApiFeature(Feature):
         key.value = hashlib.sha1(str(uuid.uuid4)).hexdigest()
         key.user = user or current_app.features.users.current
         key.expires_at = expires_at
-        key.save()
+        current_app.features.models.backend.save(key)
         return key
