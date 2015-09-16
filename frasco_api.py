@@ -1,4 +1,5 @@
 from frasco import Feature, Service, action, hook, abort, current_app, request, jsonify, g
+from frasco_models import as_transaction, transaction, save_model
 import datetime
 import base64
 import hashlib
@@ -54,15 +55,17 @@ class ApiFeature(Feature):
                 return
             key = app.features.models.find_first('ApiKey', value=key_value)
             if key:
-                now = datetime.datetime.utcnow()
-                if key.expires_at and key.expires_at < now:
-                    return None
-                key.last_accessed_at = now
-                key.last_accessed_from = request.remote_addr
-                app.features.models.backend.save(key)
+                with transaction():
+                    now = datetime.datetime.utcnow()
+                    if key.expires_at and key.expires_at < now:
+                        return None
+                    key.last_accessed_at = now
+                    key.last_accessed_from = request.remote_addr
+                    save_model(key)
                 return key.user
 
     @action('create_api_key', default_option='user', as_='api_key')
+    @as_transaction
     def create_key(self, user=None, expires_at=None):
         if not expires_at and self.options['default_key_duration']:
             expires_at = datetime.datetime.now() + datetime.timedelta(
@@ -71,5 +74,5 @@ class ApiFeature(Feature):
         key.value = hashlib.sha1(str(uuid.uuid4)).hexdigest()
         key.user = user or current_app.features.users.current
         key.expires_at = expires_at
-        current_app.features.models.backend.save(key)
+        save_model(key)
         return key
