@@ -112,26 +112,39 @@ class ApiFeature(Feature):
                 tag["description"] = srv.__doc__
             spec.add_tag(tag)
             for view in srv.views:
-                params = []
-                if hasattr(view.func, 'request_params'):
-                    for p in reversed(view.func.request_params):
-                        for pname in p.names:
-                            o = {"name": pname,
-                                 "type": convert_type_to_spec(p.type),
-                                 "required": p.required}
-                            if p.help:
-                                o['description'] = p.help
-                            params.append(o)
                 path = paths.setdefault(convert_url_args(view.url_rules[-1][0]), {})
                 for method in view.url_rules[-1][1].get('methods', ['GET']):
-                    o = {"operationId": view.name,
-                         "parameters": params,
-                         "tags": [name]}
-                    if view.func.__doc__:
-                        o['description'] = view.func.__doc__
-                    path[method.lower()] = o
-
+                    op = self.build_spec_operation(view, method)
+                    op['tags'] = [name]
+                    path[method.lower()] = op
             for path, operations in paths.iteritems():
                 spec.add_path(path=path, operations=operations)
 
         return spec
+
+    def build_spec_operation(self, view, method):
+        o = {"operationId": view.name,
+             "parameters": self.build_spec_params(view, method)}
+        if view.func.__doc__:
+            o['description'] = view.func.__doc__
+        return o
+
+    def build_spec_params(self, view, method='GET'):
+        params = []
+        if hasattr(view.func, 'request_params'):
+            url = convert_url_args(view.url_rules[-1][0])
+            for p in reversed(view.func.request_params):
+                for pname in p.names:
+                    loc = "query"
+                    if ("{%s}" % pname) in url:
+                        loc = "path"
+                    elif method.upper() in ("POST", "PUT"):
+                        loc = "formData"
+                    o = {"name": pname,
+                         "type": convert_type_to_spec(p.type),
+                         "required": p.required,
+                         "in": loc}
+                    if p.help:
+                        o['description'] = p.help
+                    params.append(o)
+        return params
