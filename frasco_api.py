@@ -25,7 +25,7 @@ class AuthenticatedApiService(ApiService):
             return jsonify({"error": "Request an API key from your account"}), 403
 
 
-_url_arg_re = re.compile(r"<([a-z]:)?([a-z0-9_]+)>")
+_url_arg_re = re.compile(r"<([a-z]+:)?([a-z0-9_]+)>")
 def convert_url_args(url):
     return _url_arg_re.sub(r"{\2}", url)
 
