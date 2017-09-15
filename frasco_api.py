@@ -22,7 +22,7 @@ class AuthenticatedApiService(ApiService):
     @hook('before_request')
     def authenticate_before_request(self):
         if request.method != 'OPTIONS' and not current_app.features.users.logged_in():
-            return jsonify({"error": "Request an API key from your account"}), 403
+            return jsonify({"error": "Request an API key from your account"}), 401
 
 
 _url_arg_re = re.compile(r"<([a-z]+:)?([a-z0-9_]+)>")
