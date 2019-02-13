@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='frasco-api',
-    version='0.6.0',
+    version='0.6.1',
     url='http://github.com/frascoweb/frasco-api',
     license='MIT',
     author='Maxime Bouroumeau-Fuseau',
@@ -15,7 +15,7 @@ setup(
     install_requires=[
         'frasco-models>=0.4',
         'frasco-users',
-        'apispec',
+        'apispec<1.0.0',
         'flask-cors'
     ]
 )
